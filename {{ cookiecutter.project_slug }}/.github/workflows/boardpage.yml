@@ -1,0 +1,39 @@
+name: create board page
+on: [push]
+
+jobs:
+  generate-boardpage:
+    runs-on: ubuntu-latest
+    container:
+      image: yaqwsx/kikit:v1.0.2
+    steps:
+      - uses: actions/checkout@v2
+      - run: mkdir output present
+      - uses: INTI-CMNB/KiBot@v1_k6
+        with:
+          config: .github/workflows/resources/boardpage.kibot.yml
+          dir: output
+          schema: "{{ cookiecutter.project_slug }}.kicad_sch"
+          board: "{{ cookiecutter.project_slug }}.kicad_pcb"
+      - run: kikit fab jlcpcb --no-drc {{ cookiecutter.project_slug }}.kicad_pcb output
+      - run: >
+          kikit present boardpage 
+          --description .github/workflows/resources/boardpage.md 
+          --board "{{ cookiecutter.project_name }}" "" {{ cookiecutter.project_slug }}.kicad_pcb 
+          --resource output/gerbers.zip 
+          --resource output/bom.html 
+          --resource output/schematic.pdf 
+          --repository "https://github.com/$GITHUB_REPOSITORY"
+          --name "{{ cookiecutter.project_name }}"
+          present
+      - run: sed -E -i 's#(<a href=")boards/\w.+-(gerbers\.zip">Download gerbers</a>)#\1output/\2#' present/index.html
+      - uses: crazy-max/ghaction-github-pages@a117e4aa1fb4854d021546d2abdfac95be568a3a
+        if: startsWith( github.ref, 'refs/tags/v')
+        with:
+          target_branch: gh-pages
+          build_dir: present
+          jekyll: false
+        env:
+          {% raw %}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          {% endraw %}

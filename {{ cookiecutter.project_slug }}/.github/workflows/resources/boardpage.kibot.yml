@@ -1,0 +1,21 @@
+kibot:
+  version: 1
+
+preflight:
+  run_erc: false
+  run_drc: false
+  check_zone_fills: false
+  ignore_unconnected: false
+
+outputs:
+  - name: "print_sch"
+    type: pdf_sch_print
+    comment: "Print schematic (PDF)"
+    options:
+      output: schematic.pdf
+
+  - name: BoM
+    type: ibom
+    comment: "Interactive Bill of Materials (HTML)"
+    options:
+      output: bom.html
